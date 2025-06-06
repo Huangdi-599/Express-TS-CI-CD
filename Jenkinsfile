@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library('jenkins-shared-library') _
+@Library('jenkins-shared-library')
 def gv
 pipeline{
     agent any
@@ -26,7 +26,9 @@ pipeline{
         stage('Deploy Node.js'){
             steps{
                 // deployNodejs is a function from the script.groovy file
-                gv.deployNodejs()
+                script{
+                    gv.deployNodejs()
+                }
             }
         }
     }
