@@ -47,42 +47,10 @@ pipeline {
                 sshagent(['ec2-ssh-key']) {
                     sh """
                         # Copy docker-compose file to EC2
-                        scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/
-                        
+                        scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/ec2-user/app/
                         # SSH into EC2 and deploy
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                            cd ~/app
-                            
-                            # Create or update docker-compose.yml with registry image
-                            cat > docker-compose.yml << EOL
-version: '3.8'
-
-services:
-  app:
-    image: ${REGISTRY_HOST}:${REGISTRY_PORT}/${DOCKER_IMAGE}:${DOCKER_TAG}
-    container_name: ${CONTAINER_NAME}
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-EOL
-                            
+                            cd /home/ec2-user/app
                             # Deploy using docker-compose
                             docker-compose down || true
                             docker-compose pull
