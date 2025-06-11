@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'lightweight-node-app'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        CONTAINER_NAME = 'lightweight-node-app'
+        EC2_HOST = credentials('EC2_HOST')
+        EC2_USER = credentials('EC2_USER')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+        
+        stage('Build and Deploy to EC2') {
+            steps {
+                sshagent(['ec2-ssh-key']) {
+                    sh """
+                        # Copy files to EC2
+                        scp -o StrictHostKeyChecking=no -r ./* ${EC2_USER}@${EC2_HOST}:~/app/
+                        
+                        # SSH into EC2 and build/deploy using docker-compose
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
+                            cd ~/app
+                            docker-compose down || true
+                            docker-compose build --no-cache
+                            docker-compose up -d
+                        '
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+} 

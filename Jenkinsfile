@@ -19,12 +19,12 @@ pipeline{
                 }
             }
         }
-        stage('Build App'){
-            steps{
-                buildNodejs()
+        // stage('Build App'){
+        //     steps{
+        //         buildNodejs()
 
-            }
-        }
+        //     }
+        // }
         stage('Build Docker Image'){
             steps{
                 buildDocker('my-node-app-image')
@@ -45,6 +45,9 @@ pipeline{
                 // deployNodejs is a function from the script.groovy file
                 script{
                     gv.deployNodejs()
+                    sshagent(['ec2-server']) {
+                        sh 'ssh'
+                    }
                 }
             }
         }
