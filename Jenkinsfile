@@ -45,8 +45,11 @@ pipeline{
                 // deployNodejs is a function from the script.groovy file
                 script{
                     gv.deployNodejs()
+                    def shellCmd  = "bash ./server-cmd.sh ${imageName} ${containerName}"
                     sshagent(['ec2-server']) {
-                        sh 'ssh'
+                        sh "scp -o StrictHostKeyChecking=no ./server-cmd.sh ec2-user@ec2-server:/home/ec2-user/server-cmd.sh"
+                        sh "scp -o StrictHostKeyChecking=no docker-compose.yaml ec2-user@ec2-server:/home/ec2-user/docker-compose.yaml"
+                        sh "ssh -o StrictHostKeyChecking=no ec2-user@ec2-server '${shellCmd}'"
                     }
                 }
             }
